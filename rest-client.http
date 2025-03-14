@@ -1,0 +1,21 @@
+
+ 
+ ### Get all appointments by data
+ GET http://localhost:3000/appointments/byDate
+
+### Get appointment by ID
+ GET http://localhost:3000/appointments/1
+
+### PUT appointment by ID
+ PUT http://localhost:3000/appointments/:id
+
+### POST all appointments by data
+ POST http://localhost:3000/appointments
+Content-Type: application/json
+
+# {
+#   "currentDate": "2021-10-10",
+#   "content": "test appointment",
+#   "editable": true,
+#   "preciseTime": "10:00"
+# }
