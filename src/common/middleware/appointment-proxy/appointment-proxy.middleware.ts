@@ -1,10 +1,11 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Request, Response, NextFunction } from 'express';
 
 @Injectable()
 export class AppointmentMockMiddleware implements NestMiddleware {
-  use(req: any, res: any, next: () => void) {
+  use(req: Request, res: Response, next: NextFunction) {
     console.log('req in Appointment MIDDL', req.body);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
     req.body = {
       currentDate: '2021-10-10',
       content: 'test appointment',
@@ -12,6 +13,5 @@ export class AppointmentMockMiddleware implements NestMiddleware {
       preciseTime: '10:00',
     };
     next();
-
   }
 }

@@ -1,0 +1,9 @@
+version: '1'
+
+services:
+  mongodb: 
+    image: mongo:latest
+    environment:
+      - MONGODB_DATABASE="catalog-manager"
+    ports:
+      - 27017:27017
