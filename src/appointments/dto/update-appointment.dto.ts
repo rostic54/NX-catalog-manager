@@ -1,30 +1,37 @@
 import {
-  IsNotEmpty,
   IsDateString,
   IsString,
   IsBoolean,
   IsOptional,
+  IsArray,
   IsMongoId,
+  IsNotEmpty,
 } from 'class-validator';
 
-export class CreateAppointmentDto {
+export class UpdateAppointmentDto {
   @IsOptional()
-  @IsMongoId()
-  readonly id?: string;
-
-  @IsNotEmpty()
   @IsDateString()
   readonly currentDate: string;
 
   @IsNotEmpty()
   @IsString()
+  @IsMongoId()
+  readonly ownerId: string;
+
+  @IsOptional()
+  @IsString()
   readonly content: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsBoolean()
   readonly editable: boolean;
 
-  @IsString()
+  @IsArray()
+  @IsNotEmpty()
+  @IsMongoId({ each: true })
+  readonly attendees: string[];
+
   @IsOptional()
+  @IsString()
   readonly preciseTime?: string;
 }

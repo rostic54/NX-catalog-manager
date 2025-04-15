@@ -8,20 +8,22 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { AppointmentService } from './appointments.service';
-import { CreateAppointmentDto } from './dto/create-appointment-dto';
-import { UpdateAppointmentDto } from './dto/update-appointment-dto';
-import { ResponseAppointmentDto } from './dto/response-appointment-dto';
+import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import { ResponseAppointmentDto } from './dto/response-appointment.dto';
 import { plainToInstance } from 'class-transformer';
+import { JwtAuthGuard } from 'src/auth/jwt-guard';
 
 @Controller('appointments')
 export class AppointmentController {
   constructor(private readonly appointmentService: AppointmentService) {}
 
   // appointments
-
   @Post()
+  @UseGuards(JwtAuthGuard)
   async create(
     @Body() createAppointment: CreateAppointmentDto,
   ): Promise<ResponseAppointmentDto> {
@@ -43,6 +45,7 @@ export class AppointmentController {
 
   // appointments/byDate
   @Get('byDate')
+  @UseGuards(JwtAuthGuard)
   async findAllByDate(
     @Query('fromDate') fromDate: string,
     @Query('toDate') toDate: string,
@@ -52,11 +55,13 @@ export class AppointmentController {
       fromDate,
       toDate,
     );
+
     return plainToInstance(ResponseAppointmentDto, appointments);
   }
 
   // appointments/:id
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async findOne(
     @Param('id')
     id: string,
@@ -75,6 +80,7 @@ export class AppointmentController {
 
   // appointments/:id
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   async update(
     @Param('id') id: string,
     @Body() appointment: UpdateAppointmentDto,
@@ -93,6 +99,7 @@ export class AppointmentController {
 
   // appointments/:id
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   async remove(@Param('id') id: string): Promise<boolean> {
     try {
       return await this.appointmentService.deleteAppointment(id);
