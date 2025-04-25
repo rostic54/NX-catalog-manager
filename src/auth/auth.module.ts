@@ -5,18 +5,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserPsg } from './entities/user-psg.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy, secretJWT } from './jwt-strategy';
-import { UserModule } from 'src/users/user.module';
+import { SharedModule } from 'src/shared/shared.module';
 
 @Module({
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
   exports: [AuthService],
   imports: [
-    UserModule,
+    SharedModule,
     TypeOrmModule.forFeature([UserPsg]),
     JwtModule.register({
       secret: process.env.JWT_SECRET || secretJWT,
-      signOptions: { expiresIn: '3h' },
+      signOptions: { expiresIn: '12h' },
     }),
   ],
 })

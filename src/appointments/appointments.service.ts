@@ -4,20 +4,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { AppointmentDocument, Appointment } from './schema/appointment.schema';
 import { Model } from 'mongoose';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
-import { User } from 'src/users/schemas/User.schema';
 import { UserService } from 'src/users/user.service';
 
-// export interface Appointment {
-//   id: number;
-//   currentDate: string;
-//   content: string;
-//   editable: boolean;
-//   preciseTime?: string;
-// }
 
 @Injectable()
 export class AppointmentService {
-  // private readonly appointments: unknown[] = [];
 
   constructor(
     @InjectModel(Appointment.name)
@@ -30,7 +21,7 @@ export class AppointmentService {
   ): Promise<AppointmentDocument> {
     let otherAttendees = 0;
 
-    if (appointment.attendees) {
+    if (appointment.attendees.length > 0) {
       otherAttendees = await this.countAndVerifyAttendees(
         appointment.attendees,
         appointment.ownerId,

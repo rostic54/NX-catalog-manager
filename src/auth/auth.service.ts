@@ -6,27 +6,25 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import * as bcrypt from 'bcryptjs';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from 'src/users/user.service';
+import { UserAccessService } from 'src/shared/shared.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly userService: UserService,
+    private readonly sharedService: UserAccessService,
     @InjectRepository(UserPsg) private userRepository: Repository<UserPsg>,
-  ) {
-    // Constructor logic if needed
-  }
+  ) {}
 
   async register(userDto: RegisterUserDto): Promise<boolean> {
-    // Registration logic here
     const salt = await bcrypt.genSalt();
     userDto.password = await bcrypt.hash(userDto.password, salt);
     const newUser = await this.userRepository.save(userDto);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = newUser;
 
-    const createdUser = await this.userService.create(userWithoutPassword);
+    const createdUser =
+      await this.sharedService.createUserInMongo(userWithoutPassword);
     if (!createdUser) {
       throw new HttpException('User not created', 500);
     }

@@ -8,8 +8,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-guard';
+import { ValidatedUser } from 'src/common/types/user';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UserController {
@@ -17,26 +18,25 @@ export class UserController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  async getProfile(@Request() req) {
+  async getProfile(@Request() req: { user: ValidatedUser }) {
     console.log('GET PROFILE USER:', req.user);
     try {
       const user = await this.userService.findByEmail(req.user.email);
       return user;
-    } catch (error) {
-      throw new HttpException(error.message, 400);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new HttpException(errorMessage, 400);
     }
     // return req.user;
   }
 
   @Post('update')
-  async register(@Body() user: CreateUserDto) {
-    console.log('REGISTER USER:', user);
-    try {
-      await this.userService.create(user);
-    } catch (error) {
-      throw new HttpException(error.message, 400);
-      // Registration logic here
-      return { message: 'User registered successfully' };
-    }
+  @UseGuards(JwtAuthGuard)
+  async register(
+    @Body() user: UpdateUserDto,
+    @Request() req: { user: ValidatedUser },
+  ) {
+    return await this.userService.update(user, req.user.email);
   }
 }

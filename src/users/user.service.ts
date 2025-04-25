@@ -3,10 +3,15 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User } from 'src/users/schemas/User.schema';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserAccessService } from 'src/shared/shared.service';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    private readonly sharedService: UserAccessService,
+  ) {}
 
   async findAll(): Promise<User[]> {
     return this.userModel.find().exec();
@@ -29,8 +34,11 @@ export class UserService {
     return await newUser.save();
   }
 
-  async update(id: string, user: Partial<User>): Promise<User | null> {
-    return this.userModel.findByIdAndUpdate(id, user, { new: true }).exec();
+  async update(
+    userForUpdate: UpdateUserDto,
+    email: string,
+  ): Promise<User | null> {
+    return this.sharedService.updateUserInfoInBothDBs(userForUpdate, email);
   }
 
   async delete(id: string): Promise<User | null> {

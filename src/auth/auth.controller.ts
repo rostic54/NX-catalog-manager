@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  HttpCode,
   HttpException,
   Post,
   Res,
@@ -17,7 +16,6 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() registerDto: RegisterUserDto) {
-    console.log('REGISTER USE API :', registerDto);
     try {
       return await this.authService.register(registerDto);
     } catch (error) {
