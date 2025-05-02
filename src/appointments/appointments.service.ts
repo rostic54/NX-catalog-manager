@@ -2,14 +2,12 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { AppointmentDocument, Appointment } from './schema/appointment.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { UserService } from 'src/users/user.service';
 
-
 @Injectable()
 export class AppointmentService {
-
   constructor(
     @InjectModel(Appointment.name)
     private readonly appointmentModel: Model<AppointmentDocument>,
@@ -36,6 +34,12 @@ export class AppointmentService {
     const createdAppointment =
       await this.appointmentModel.create(modifiedAppointment);
 
+    await this.updateAppointmentIdsInAttendees(
+      createdAppointment.id,
+      [],
+      createdAppointment.attendees,
+    );
+
     return createdAppointment.toObject();
   }
 
@@ -58,18 +62,25 @@ export class AppointmentService {
       ...appointment,
       otherAttendees,
     };
-    const updatedAppointment = await this.appointmentModel
-      .findByIdAndUpdate(id, { $set: modifiedAppointment }, { new: true })
-      .exec();
-    if (!updatedAppointment) {
+    const foundAppointment = await this.appointmentModel.findById(id).exec();
+    if (!foundAppointment) {
       // TODO: throw an error
       throw new HttpException(
         `Appointment with ID ${id} not found for updating`,
         402,
       );
     }
+    const updatedAppointment = await this.appointmentModel
+      .findByIdAndUpdate(id, { $set: modifiedAppointment }, { new: true })
+      .exec();
 
-    return updatedAppointment.toObject();
+    await this.updateAppointmentIdsInAttendees(
+      id,
+      foundAppointment.attendees,
+      updatedAppointment!.attendees,
+    );
+
+    return updatedAppointment!.toObject();
   }
 
   async getById(id: string): Promise<AppointmentDocument> {
@@ -96,9 +107,18 @@ export class AppointmentService {
   }
 
   async deleteAppointment(id: string): Promise<boolean> {
-    const deletedAppointment = await this.appointmentModel
-      .findByIdAndDelete(id)
-      .exec();
+    const appointment = await this.appointmentModel.findById(id).exec();
+    if (!appointment) {
+      throw new HttpException(
+        `Appointment with ID ${id} not found for deleting`,
+        402,
+      );
+    }
+    await this.updateAppointmentIdsInAttendees(id, appointment.attendees);
+    const deletedAppointment = await this.appointmentModel.deleteOne({
+      _id: id,
+    });
+
     if (!deletedAppointment) {
       throw new HttpException(
         `Appointment with ID ${id} not found for deleting`,
@@ -106,6 +126,24 @@ export class AppointmentService {
       );
     }
     return true;
+  }
+
+  private async updateAppointmentIdsInAttendees(
+    appointmentId: string,
+    oldAttendeeIds: mongoose.Types.ObjectId[],
+    newAttendeeIds: mongoose.Types.ObjectId[] = [],
+  ): Promise<void> {
+    const oldAttendees = oldAttendeeIds.map((a) => a.toString());
+    const newAttendees = newAttendeeIds.map((a) => a.toString());
+
+    const updatedAttendees = await this.userService.syncUserAppointments(
+      appointmentId,
+      oldAttendees,
+      newAttendees,
+    );
+    if (!updatedAttendees) {
+      throw new HttpException('Failed to update attendees', 500);
+    }
   }
 
   private async countAndVerifyAttendees(

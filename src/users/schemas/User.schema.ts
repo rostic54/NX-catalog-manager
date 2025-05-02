@@ -1,4 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose from 'mongoose';
+import { Appointment } from 'src/appointments/schema/appointment.schema';
 
 @Schema()
 export class User {
@@ -11,17 +13,17 @@ export class User {
   @Prop({ required: false })
   avatarUrl: string;
 
-  // @Prop({
-  //   type: [
-  //     {
-  //       required: true,
-  //       type: mongoose.Schema.Types.ObjectId,
-  //       ref: 'Appointment',
-  //     },
-  //   ],
-  // })
-  // appointments: Appointment[];
-  //   password: string;
+  @Prop({
+    type: [
+      {
+        required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Appointment',
+      },
+    ],
+  })
+  appointments: Appointment[];
+  // password: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -4,6 +4,7 @@ import {
   Get,
   HttpException,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -29,6 +30,22 @@ export class UserController {
       throw new HttpException(errorMessage, 400);
     }
     // return req.user;
+  }
+
+  @Get('search')
+  @UseGuards(JwtAuthGuard)
+  async search(
+    @Query('searchTerm') searchTerm: string,
+    @Request() req: { user: ValidatedUser },
+  ) {
+    return await this.userService.search(searchTerm, req.user.email);
+  }
+
+  @Get('attendees')
+  @UseGuards(JwtAuthGuard)
+  async getAttendance(@Query('ids') ids: string) {
+    const idArray = ids.split(',');
+    return await this.userService.findUsersByIds(idArray);
   }
 
   @Post('update')

@@ -30,7 +30,7 @@ export class Appointment {
     //   'At least one attendee is required',
     // ],
   })
-  attendees: (mongoose.Types.ObjectId | User)[];
+  attendees: mongoose.Types.ObjectId[];
 
   @Prop({ required: true, type: Number })
   otherAttendees: number;

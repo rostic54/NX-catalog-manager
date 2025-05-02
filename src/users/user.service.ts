@@ -5,6 +5,10 @@ import { User } from 'src/users/schemas/User.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserAccessService } from 'src/shared/shared.service';
+import {
+  addAppointmentIdToUser,
+  deleteAppointmentIdFromUser,
+} from './sync-user-appointments';
 
 @Injectable()
 export class UserService {
@@ -45,9 +49,54 @@ export class UserService {
     return this.userModel.findByIdAndDelete(id).exec();
   }
 
+  async search(searchTerm: string, loggedUserEmail: string): Promise<User[]> {
+    return this.userModel
+      .find({
+        $and: [
+          {
+            $or: [
+              { userName: { $regex: searchTerm, $options: 'i' } },
+              { email: { $regex: searchTerm, $options: 'i' } },
+            ],
+          },
+          { email: { $ne: loggedUserEmail } },
+        ],
+      })
+      .exec();
+  }
+
+  async findUsersByIds(userIds: string[]): Promise<User[]> {
+    return this.userModel.find({ _id: { $in: userIds } }).exec();
+  }
+
   async verifyUserIds(ids: string[]): Promise<boolean> {
     const objectIds = ids.map((id) => new Types.ObjectId(id));
     const users = await this.userModel.find({ _id: { $in: objectIds } }).exec();
     return users.length === ids.length;
+  }
+
+  async syncUserAppointments(
+    appointmentId: string,
+    oldAttendees: string[],
+    newAttendees: string[],
+  ): Promise<boolean> {
+    const addedUsers = newAttendees.filter((a) => !oldAttendees.includes(a));
+    const removedUsers = oldAttendees.filter((a) => !newAttendees.includes(a));
+
+    const addAttendeesRequest = addedUsers.length
+      ? addAppointmentIdToUser(this.userModel, appointmentId, addedUsers)
+      : true;
+    const removeAttendeesRequest = removedUsers.length
+      ? deleteAppointmentIdFromUser(this.userModel, appointmentId, removedUsers)
+      : true;
+
+    return await Promise.all([addAttendeesRequest, removeAttendeesRequest])
+      .then((results) => {
+        return results.every((result) => result);
+      })
+      .catch((error) => {
+        console.error('Error syncing user appointments:', error);
+        throw new HttpException('Failed to sync user appointments', 500);
+      });
   }
 }
