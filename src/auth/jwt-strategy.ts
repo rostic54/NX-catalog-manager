@@ -3,12 +3,13 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Request } from 'express';
 import { ValidatedUser } from 'src/common/types/user';
+import { ConfigService } from '@nestjs/config';
 
 export const secretJWT = '123qwe';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
+  constructor(private configService: ConfigService) {
     super({
       // The name of the JWT strategy
       jwtFromRequest: ExtractJwt.fromExtractors([
@@ -18,7 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         },
       ]),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || secretJWT,
+      secretOrKey: configService.get<string>('JWT_SECRET') ?? secretJWT,
     });
   }
 

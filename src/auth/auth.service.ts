@@ -29,7 +29,6 @@ export class AuthService {
       throw new HttpException('User not created', 500);
     }
 
-    console.log('REGISTERED USER IN DB:', userWithoutPassword);
     return true;
   }
 

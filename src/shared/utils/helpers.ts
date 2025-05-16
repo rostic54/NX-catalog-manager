@@ -13,3 +13,14 @@ export function hasChanges<T extends Record<string, any>>(
     return oldValue !== newValue;
   });
 }
+
+export function normalizeValue(value: string): string {
+  if (!value) {
+    return value;
+  }
+  return value
+    .toLowerCase() // все у нижній регістр
+    .replace(/\s+/g, '-') // пробіли замінити на дефіси
+    .replace(/[^a-z0-9-]/g, '') // прибрати спецсимволи
+    .trim();
+}

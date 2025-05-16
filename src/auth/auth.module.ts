@@ -4,8 +4,9 @@ import { AuthController } from './auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserPsg } from './entities/user-psg.entity';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy, secretJWT } from './jwt-strategy';
+import { JwtStrategy } from './jwt-strategy';
 import { SharedModule } from 'src/shared/shared.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   providers: [AuthService, JwtStrategy],
@@ -14,9 +15,13 @@ import { SharedModule } from 'src/shared/shared.module';
   imports: [
     SharedModule,
     TypeOrmModule.forFeature([UserPsg]),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || secretJWT,
-      signOptions: { expiresIn: '12h' },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: '12h' },
+      }),
+      inject: [ConfigService],
     }),
   ],
 })

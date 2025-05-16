@@ -8,6 +8,8 @@ import { UserModule } from './users/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { UserPsg } from './auth/entities/user-psg.entity';
+import { AiAssistantModule } from './ai-assistant/ai-assistant.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -15,16 +17,24 @@ import { UserPsg } from './auth/entities/user-psg.entity';
     AppointmentsModule,
     UserModule,
     MongooseModule.forRoot('mongodb://localhost:27017/catalog-manager'),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost', // or 'postgres' as set in docker file
-      database: 'catalog-manager',
-      port: 5432,
-      username: 'postgres',
-      password: 'root',
-      entities: [UserPsg],
-      synchronize: true,
+    ConfigModule.forRoot({
+      isGlobal: true,
     }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_NAME'),
+        entities: [UserPsg],
+        synchronize: true, // Set to false in production
+      }),
+      inject: [ConfigService],
+    }),
+    AiAssistantModule,
   ],
   controllers: [AppController],
   providers: [AppService],
